@@ -61,23 +61,30 @@ class Tasks extends \ArrayIterator {
       'apply' => 'prepend',
       'strip_colon' => '',
       'delimiter' => ': ',
+      'strlen_max' => NULL,
     ), (array) $conf);
 
     // Get the unfiltered tasks.
     $all = $this->engine->getTasks();
+    $project_tasks = array();
 
     // Build a new array of tasks.
     $tasks = array();
-    foreach ($this as $task) {
-      if ($task['indent'] > 1) {
+    foreach ($this->getArrayCopy() as $task) {
+      if (isset($conf['strlen_max']) && $conf['strlen_max'] < strlen($task['content'])) {
+        // Do nothing if the task is already long enough.
+      }
+      elseif ($task['indent'] > 1) {
         // Look for the previous item
         $prev_indent = $task['indent'] - 1;
         $prev_order = $task['item_order'] - 1;
         $prev_project = $task['project_id'];
+        if (!isset($project_tasks[$prev_project])) {
+          $project_tasks[$prev_project] = $all->filterByProject($prev_project);
+        }
         while ($prev_order > 0) {
-          foreach ($all as $item) {
-            if ($item['item_order'] == $prev_order
-              && $item['project_id'] == $prev_project) {
+          foreach ($project_tasks[$prev_project] as $item) {
+            if ($item['item_order'] == $prev_order) {
               if ($prev_indent == $item['indent']) {
                 $parent = $item['content'];
                 switch (strtolower($conf['strip_colon'])) {
