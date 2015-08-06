@@ -1,0 +1,26 @@
+{
+    "name":"cpnporg/todoist-php",
+    "type":"library",
+    "description":"Pre-alpha",
+    "keywords":[
+        "xml"
+    ],
+    "homepage":"https://github.com/cpnporg/todoist-php",
+    "license":"MIT",
+    "authors":[
+        {
+            "name":"Greg Payne",
+            "homepage":"https://cpnp.org/",
+            "role":"Packager"
+        }
+    ],
+    "require":{
+        "guzzlehttp/guzzle":"6.*",
+        "php":">=5.3.3"
+    },
+    "autoload":{
+        "psr-4":{
+            "Todoist\\": "src/"
+        }
+    }
+}
