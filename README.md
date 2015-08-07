@@ -1,5 +1,11 @@
 # Todoist (unofficial PHP SDK)
 
+## Project Status
+
+Currently, this project provides read-only access to Todoist Tasks and Projects.
+It adds some basic filtering and manipulation capabilities that are not provided
+by the API directly.
+
 ## Basic Usage
 
 ```php
@@ -8,9 +14,11 @@ $tasks = $todoist->getTasks();
 $projects = $todoist->getProjects();
 ```
 
-## Chaining
+## Design Decision
 
-`Tasks` and `Projects` are intended to be iterable and chainable.
+`Tasks` and `Projects` are intended to be iterable, chainable and immutable.
+Each custom method added to the classes return a new object with copies of the
+items rather than references.
 
 ```php
 foreach ($todoist->getTasks()->filterByProject('Project Name') as $task) {
