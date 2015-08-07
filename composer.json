@@ -1,9 +1,10 @@
 {
     "name":"cpnporg/todoist-php",
     "type":"library",
-    "description":"Pre-alpha",
+    "description":"Access the Todoist API",
     "keywords":[
-        "xml"
+        "Todoist",
+        "API"
     ],
     "homepage":"https://github.com/cpnporg/todoist-php",
     "license":"MIT",
