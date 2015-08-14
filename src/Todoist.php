@@ -33,14 +33,22 @@ class Todoist {
   private $token = NULL;
 
   /**
-   * All projects
-   */
-
-  /**
    * All tasks
    * @var \Todoist\Task\Tasks
    */
   private $tasks = NULL;
+
+  /**
+   * Use the command queue.
+   * @var TRUE
+   */
+  private $use_command_queue = FALSE;
+
+  /**
+   * Track the command queue for this engine.
+   * @var array
+   */
+  private $command_queue = array();
 
   /**
    * @see Todoist::setToken
@@ -55,9 +63,38 @@ class Todoist {
     $this->token = $token;
   }
 
+  /**
+   * Run all commands in the queue.
+   * @return \Todoist\Todoist
+   */
+  public function &flushCommandQueue() {
+    $commands_per_batch = 50;
+    while (!empty($this->command_queue)) {
+      // Get the first batch of commands.
+      $commands = array_slice($this->command_queue, 0, $commands_per_batch);
+      $this->command_queue = array_slice($this->command_queue, $commands_per_batch);
+
+      // Run the commands
+      $response = $this->getApiResponse('sync', array(
+        'commands' => $commands,
+      ));
+      foreach ($response['SyncStatus'] as $data) {
+        if ($data !== 'ok' && is_array($data['error'])) {
+          throw new \ErrorException($data['error'], $data['error_code']);
+        }
+      }
+    }
+    return $this;
+  }
+
   public function getApiResponse($method, $params) {
     // Make the request.
     $params['token'] = $this->token;
+    foreach ($params as $k => $v) {
+      if (is_array($v)) {
+        $params[$k] = json_encode($v);
+      }
+    }
     $response = $this->client->post($method, array(
       'form_params' => $params,
     ));
@@ -69,11 +106,6 @@ class Todoist {
     // Return when everything is OK.
     if ($response->getStatusCode() == 200 && is_array($data)) {
       return $data;
-    }
-
-    // Look for an error message in JSON.
-    if (is_array($data) && isset($data['error'])) {
-      throw new \ErrorException($data['error'], $data['error_code']);
     }
 
     /** @link https://developer.todoist.com/#errors */
@@ -96,6 +128,55 @@ class Todoist {
       default:
         throw new \ErrorException("Error making API request to Todoist.");
     }
+
+    // Look for an error message in JSON.
+    if (is_array($data) && isset($data['error'])) {
+      throw new \ErrorException($data['error'], $data['error_code']);
+    }
+  }
+
+  public function getApiSingleCommandResponse($type, $args) {
+    // Build the command.
+    $command = array(
+      'type' => $type,
+      'uuid' => uuid_create(),
+      'args' => (array) $args,
+    );
+
+    // Stop quickly if the command should be queued.
+    if ($this->useCommandQueue()) {
+      $this->command_queue[] = $command;
+      return $this;
+    }
+
+    // Build the API call
+    $method = 'sync';
+    $commands = array();
+    $commands[] = $command;
+    $response = $this->getApiResponse($method, array(
+      'commands' => $commands,
+    ));
+
+    // Validate the response.
+    if (isset($response['SyncStatus'][$command['uuid']])) {
+      $data = $response['SyncStatus'][$command['uuid']];
+
+      // Handle the simple response.
+      if ($data === 'ok') {
+        return TRUE;
+      }
+      // Handle the error response.
+      if (isset($data['error'])) {
+        throw new \ErrorException($data['error'], $data['error_code']);
+      }
+      // Handle the complex response (multiple return values).
+      foreach ($data as $d) {
+        if (isset($d['error'])) {
+          throw new \ErrorException($d['error'], $d['error_code']);
+        }
+      }
+      return TRUE;
+    }
   }
 
   /**
@@ -110,6 +191,15 @@ class Todoist {
       }
     }
     throw new \InvalidArgumentException("Invalid Todoist project reference.");
+  }
+
+  /**
+   * Get an iterable listing of all projects.
+   * @return \Todoist\Project\Projects
+   */
+  public function &getProjects() {
+    $this->loadAll();
+    return $this->projects;
   }
 
   /**
@@ -138,9 +228,10 @@ class Todoist {
       )),
     ));
     $this->projects = new Projects($data['Projects']);
-    $this->projects->setEngine($projects);
+    $this->projects->setEngine($this);
     $this->tasks = new Tasks($data['Items']);
     $this->tasks->setEngine($this);
+
     return $this;
   }
 
@@ -154,6 +245,22 @@ class Todoist {
   public function setToken($token) {
     $this->token = $token;
     return $this;
+  }
+
+  /**
+   * Set (or get) whether to use the command queue.
+   * @param bool $set
+   * @return \Todoist\TRUE
+   */
+  public function useCommandQueue($set = NULL) {
+    if ($set) {
+      $old = $this->use_command_queue;
+      $this->use_command_queue = (bool) $set;
+      return $old;
+    }
+    else {
+      return $this->use_command_queue;
+    }
   }
 
 }
