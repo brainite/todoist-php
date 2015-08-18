@@ -55,3 +55,28 @@ $tasks = $tasks->applyParentTasks(array(
   'strlen_max' => 5,
 ));
 ```
+
+## Sync Project Hierarchy
+
+WARNING: Each user receives a custom project_id.
+Therefore, the project hierarchy sync relies on distinct project names regardless of indentation.
+
+WARNING: It is also important to use the Command Queue to avoid the rate limit error from Todoist.
+
+The following example syncs projects and moves unknown projects to the top.
+
+```php
+$source_todoist = Todoist::factory($source_token);
+$source_projects = $source_todoist->getProjects();
+
+try {
+  $todoist = Todoist::factory($token);
+  $todoist->useCommandQueue(TRUE);
+  $projects = &$todoist->getProjects();
+  $projects->syncOrderIndent($source_projects, 'top');
+  $todoist->flushCommandQueue();
+} catch (\Exception $e) {
+  echo "Error: " . $e->getMessage() . "\n";
+}
+
+```
