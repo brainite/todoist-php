@@ -87,6 +87,14 @@ class Todoist {
     return $this;
   }
 
+  /**
+   * Get a structured array of commands that should be sent.
+   * @return array
+   */
+  public function getCommandQueue() {
+    return $this->command_queue;
+  }
+
   public function getApiResponse($method, $params) {
     // Make the request.
     $params['token'] = $this->token;
