@@ -51,6 +51,21 @@ class Projects extends \ArrayIterator {
     // Warning: Error suppression is required
     // See https://bugs.php.net/bug.php?id=50688
     @$this->uasort(function ($a, $b) use ($tpl, $unknown_mode) {
+      // Leave Inbox and Team Inbox alone at the top of the list.
+      if ($a['name'] === 'Inbox' && $a['item_order'] <= 3) {
+        return -1;
+      }
+      if ($b['name'] === 'Inbox' && $b['item_order'] <= 3) {
+        return 1;
+      }
+      if ($a['name'] === 'Team Inbox' && $a['item_order'] <= 3) {
+        return -1;
+      }
+      if ($b['name'] === 'Team Inbox' && $b['item_order'] <= 3) {
+        return 1;
+      }
+
+      // Init comparison vars.
       $a_tpl = $b_tpl = NULL;
       $unknown_order = ($unknown_mode === 'top') ? -1 : 10000;
 
@@ -94,7 +109,14 @@ class Projects extends \ArrayIterator {
     // Change the item_order codes based on the current order.
     $item_order = 0;
     foreach ($this as &$project) {
-      $project['item_order'] = ++$item_order;
+      if (preg_match('@^Inbox$|^Team Inbox$@s', $project['name'])
+        && $project['item_order'] == 0) {
+        // Do nothing. Do not change sort order of special folders.
+      }
+      else {
+        $project['item_order'] = $item_order;
+      }
+      ++$item_order;
       try {
         $find = $tpl->getProject($project['name']);
         $project['indent'] = $find['indent'];
