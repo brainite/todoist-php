@@ -56,6 +56,67 @@ class Tasks extends \ArrayIterator {
     return $this->factorySub($tasks);
   }
 
+  /**
+   * Filter by project name or id.
+   *
+   * @param array $filter
+   * @return \Todoist\Task\Tasks
+   */
+  public function filterByRecurrence($filter = NULL) {
+    $filter = array_replace(array(
+      'min_year' => 0,
+      'max_year' => 365,
+    ), (array) $filter);
+
+    // Build patterns for various elements.
+    $month = '(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:[a-z]*)';
+    $day = '(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)(?:[a-z]*)';
+    $time = '(?: at .*)?$';
+
+    // Build a new array of tasks.
+    $tasks = array();
+    foreach ($this as $task) {
+      $ds = trim($task['date_string']);
+      $rec = NULL;
+      if (preg_match("@every $month \d+$|every \d+/\d+$@si", $ds)) {
+        $rec = 1;
+      }
+      elseif (preg_match("@every month@si", $ds)) {
+        $rec = 12;
+      }
+      elseif (preg_match("@every workday$time@si", $ds)) {
+        $rec = 260;
+      }
+      elseif (preg_match("@every $day$time$|every week@si", $ds)) {
+        $rec = 52;
+      }
+      elseif (preg_match("@every $day,\s*$day$time$@si", $ds)) {
+        $rec = 52 * 2;
+      }
+      elseif (preg_match("@every $day,\s*$day,\s*$day$time$@si", $ds)) {
+        $rec = 52 * 3;
+      }
+      elseif (!preg_match("@every@si", $ds)) {
+        if (preg_match("@\d{4}$@si", $ds)) {
+          $rec = 0;
+        }
+      }
+
+      if (!isset($rec) && $filter['min_year'] == 0) {
+        $task['date_recurrence'] = $ds;
+      }
+      elseif ($rec <= $filter['max_year'] && $rec >= $filter['min_year']) {
+        $task['date_recurrence'] = $rec;
+        $tasks[] = $task;
+      }
+    }
+    return $this->factorySub($tasks);
+  }
+
+  /**
+   * @param array $conf
+   * @return \Todoist\Task\Tasks
+   */
   public function applyParentTasks($conf) {
     $conf = array_merge(array(
       'apply' => 'prepend',
@@ -128,6 +189,31 @@ class Tasks extends \ArrayIterator {
   public function setEngine(&$engine) {
     $this->engine = &$engine;
     return $this;
+  }
+
+  public function sort($field) {
+    $tasks = array();
+    foreach ($this as $task) {
+      $tasks[] = $task;
+    }
+    usort($tasks, function($a, $b) use ($field) {
+      $x = $a[$field];
+      $y = $b[$field];
+      if ($field === 'due_date') {
+        $x = strtotime($x);
+        $y = strtotime($y);
+      }
+      if ($x < $y) {
+        return -1;
+      }
+      elseif ($x === $y) {
+        return ($a['content'] < $b['content']) ? -1 : 0;
+      }
+      else {
+        return 1;
+      }
+    });
+    return $this->factorySub($tasks);
   }
 
 }
