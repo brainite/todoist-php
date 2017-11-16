@@ -22,7 +22,7 @@ class Projects extends \ArrayIterator {
    */
   public function setEngine(&$engine) {
     $this->engine = &$engine;
-    foreach ($this as &$el) {
+    foreach ($this as $el) {
       $el->setEngine($engine);
     }
     return $this;
