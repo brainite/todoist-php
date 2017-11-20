@@ -57,7 +57,7 @@ class Todoist {
   public function __construct($token = NULL) {
     $this->client = new \GuzzleHttp\Client(array(
       'base_uri' => 'https://todoist.com/API/v6/',
-      'timeout' => 2,
+      'timeout' => 10,
       'verify' => TRUE,
     ));
     $this->token = $token;
