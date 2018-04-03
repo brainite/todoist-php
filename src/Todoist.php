@@ -56,7 +56,7 @@ class Todoist {
    */
   public function __construct($token = NULL) {
     $this->client = new \GuzzleHttp\Client(array(
-      'base_uri' => 'https://todoist.com/API/v6/',
+      'base_uri' => 'https://todoist.com/api/v7/',
       'timeout' => 10,
       'verify' => TRUE,
     ));
@@ -235,9 +235,9 @@ class Todoist {
         'projects',
       )),
     ));
-    $this->projects = new Projects($data['Projects']);
+    $this->projects = new Projects($data['projects']);
     $this->projects->setEngine($this);
-    $this->tasks = new Tasks($data['Items']);
+    $this->tasks = new Tasks($data['items']);
     $this->tasks->setEngine($this);
 
     return $this;
