@@ -1,17 +1,17 @@
 {
-    "name":"cpnporg/todoist-php",
+    "name":"brainite/todoist-php",
     "type":"library",
     "description":"Access the Todoist API",
     "keywords":[
         "Todoist",
         "API"
     ],
-    "homepage":"https://github.com/cpnporg/todoist-php",
+    "homepage":"https://github.com/brainite/todoist-php",
     "license":"MIT",
     "authors":[
         {
             "name":"Greg Payne",
-            "homepage":"https://cpnp.org/",
+            "homepage":"https://brainite.org/",
             "role":"Packager"
         }
     ],
