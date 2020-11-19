@@ -56,7 +56,7 @@ class Todoist {
    */
   public function __construct($token = NULL) {
     $this->client = new \GuzzleHttp\Client(array(
-      'base_uri' => 'https://todoist.com/api/v7/',
+      'base_uri' => 'https://todoist.com/api/v8/',
       'timeout' => 10,
       'verify' => TRUE,
     ));
@@ -78,7 +78,7 @@ class Todoist {
       $response = $this->getApiResponse('sync', array(
         'commands' => $commands,
       ));
-      foreach ($response['SyncStatus'] as $data) {
+      foreach ($response['sync_status'] as $data) {
         if ($data !== 'ok' && is_array($data['error'])) {
           throw new \ErrorException($data['error'], $data['error_code']);
         }
@@ -147,7 +147,7 @@ class Todoist {
     // Build the command.
     $command = array(
       'type' => $type,
-      'uuid' => uuid_create(),
+      'uuid' => \Ramsey\Uuid\Uuid::uuid1()->toString(),
       'args' => (array) $args,
     );
 
@@ -166,8 +166,8 @@ class Todoist {
     ));
 
     // Validate the response.
-    if (isset($response['SyncStatus'][$command['uuid']])) {
-      $data = $response['SyncStatus'][$command['uuid']];
+    if (isset($response['sync_status'][$command['uuid']])) {
+      $data = $response['sync_status'][$command['uuid']];
 
       // Handle the simple response.
       if ($data === 'ok') {

@@ -16,8 +16,8 @@
         }
     ],
     "require":{
-        "ext-uuid":"1.*",
         "guzzlehttp/guzzle":"6.*",
+        "ramsey/uuid":"^3.4",
         "php":">=5.3.3"
     },
     "autoload":{
