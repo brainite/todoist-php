@@ -2,6 +2,8 @@
 
 ## Project Status
 
+*This project is no longer maintained.*
+
 Currently, this project provides read-only access to Todoist Tasks and Projects.
 It adds some basic filtering and manipulation capabilities that are not provided
 by the API directly.
